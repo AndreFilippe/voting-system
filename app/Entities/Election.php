@@ -19,6 +19,33 @@ class Election extends Entity
         $this->setCandidates($candidates);
     }
 
+    public function registerCandidate(Candidate $candidate): bool
+    {
+        if ($this->hasStarted()) {
+            throw new \Exception("Election has already started", 400);
+        }
+
+        if ($this->isRegisterCandidate($candidate)) {
+            throw new \Exception("Candidate is already registered", 400);
+        }
+
+        $this->candidates[] = $candidate;
+
+        return true;
+    }
+
+    private function hasStarted(): bool
+    {
+        $now = Carbon::now();
+
+        return $now->greaterThanOrEqualTo($this->startAt);
+    }
+
+    private function isRegisterCandidate(Candidate $candidate): bool
+    {
+        $uuids = array_column($this->candidates, 'uuid');
+        return in_array($candidate->uuid, $uuids);
+    }
     private function setCandidates(array $candidates): void
     {
         $this->checkCandidates($candidates);

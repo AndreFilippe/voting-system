@@ -1,0 +1,29 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Install PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.1"
+          coverage: xdebug
+
+      - name: Installing Composer
+        run: composer install --no-ansi --no-interaction --no-suggest --prefer-dist
+
+      - name: Running PHPUnit
+        run: vendor/bin/phpunit

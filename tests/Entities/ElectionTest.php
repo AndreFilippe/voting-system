@@ -2,11 +2,7 @@
 
 namespace Test\Entities;
 
-use App\Entities\Candidate;
 use App\Entities\Election;
-use App\Entities\Vote;
-use App\Entities\Voter;
-use Carbon\Carbon;
 use Test\TestCase;
 
 /**
@@ -30,6 +26,19 @@ class ElectionTest extends TestCase
     /**
      * @test
      */
+    public function itShouldAddCandidate()
+    {
+        $candidate = $this->mockCandidate("123456789");
+        $election = $this->mockElection();
+
+        $this->assertTrue($election->addCandidate($candidate));
+        $candidates = $this->getProperty($election, 'candidates');
+        $this->assertTrue(in_array($candidate, $candidates));
+    }
+
+    /**
+     * @test
+     */
     public function itShouldReturnCandidatesInvalid()
     {
         $this->expectExceptionMessage('Candidates invalid');
@@ -42,61 +51,13 @@ class ElectionTest extends TestCase
     /**
      * @test
      */
-    public function itShouldRegisterCandidate()
+    public function itShouldAddVote()
     {
-        $this->setDateTime('2022-03-09 20:22:00');
         $candidate = $this->mockCandidate("123456789");
         $election = $this->mockElection();
 
-        $election->registerCandidate($candidate);
-        $candidates = $this->getProperty($election, 'candidates');
-        $this->assertTrue(in_array($candidate, $candidates));
-    }
-
-    /**
-     * @test
-     */
-    public function itNotShouldRegisterCandidateAfterStart()
-    {
-        $election = $this->mockElection();
-        $candidate = $this->mockCandidate("123456789");
-
-        $dateTimes = ['2022-03-09 20:23:00', '2022-03-09 20:24:00'];
-        //dataProvider not working
-        foreach ($dateTimes as $dateTime) {
-            $this->setDateTime($dateTime);
-            $this->expectExceptionMessage('Election has already started');
-            $this->expectExceptionCode(400);
-            $election->registerCandidate($candidate);
-        }
-    }
-
-    /**
-     * @test
-     */
-    public function itNotShouldRegisterCandidateDuplicate()
-    {
-        $this->setDateTime('2022-03-09 20:20:00');
-        $candidate = $this->mockCandidate("123456789");
-        $election = $this->mockElection([$candidate]);
-
-        $this->expectExceptionMessage('Candidate is already registered');
-        $this->expectExceptionCode(400);
-
-        $election->registerCandidate($candidate);
-    }
-
-    /**
-     * @test
-     */
-    public function itShouldRegisterVote()
-    {
-        $this->setDateTime('2022-03-09 20:23:00');
-        $candidate = $this->mockCandidate('abc');
         $vote = $this->mockVote($candidate);
-        $election = $this->mockElection([$candidate]);
-
-        $this->assertTrue($election->registerVote($vote));
+        $this->assertTrue($election->addVote($vote));
 
         $votes = $this->getProperty($election, 'votes');
         $this->assertTrue(in_array($vote, $votes));
@@ -105,67 +66,85 @@ class ElectionTest extends TestCase
     /**
      * @test
      */
-    public function itNotShouldRegisterVoteBeforeStart()
+    public function itShouldReturnVotesInvalid()
+    {
+        $this->expectExceptionMessage('Votes invalid');
+        $this->expectExceptionCode(400);
+
+        $candidate = $this->mockCandidate("123456789");
+        $vote = $this->mockVote($candidate);
+        $this->mockElection(votes: [$vote, 'teste']);
+    }
+
+    /**
+     * @test
+     */
+    public function itShouldReturnTrueAfterStart()
+    {
+        $election = $this->mockElection();
+
+        $dateTimes = ['2022-03-09 20:23:00', '2022-03-09 20:24:00'];
+        //dataProvider not working
+        foreach ($dateTimes as $dateTime) {
+            $this->setDateTime($dateTime);
+            $this->assertTrue($election->hasStarted());
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function itShouldReturnFalseBeforeStart()
     {
         $this->setDateTime('2022-03-09 20:22:59');
-        $vote = $this->mockVote($this->mockCandidate('abc'));
         $election = $this->mockElection();
 
-        $this->expectExceptionMessage('Election has not already started');
-        $this->expectExceptionCode(400);
-
-        $election->registerVote($vote);
+        $this->assertfalse($election->hasStarted());
     }
 
     /**
      * @test
      */
-    public function itNotShouldRegisterVoteAfterEnd()
+    public function itShouldReturnTrueAfterEnd()
     {
         $this->setDateTime('2022-03-10 20:23:01');
-        $vote = $this->mockVote($this->mockCandidate('abc'));
         $election = $this->mockElection();
 
-        $this->expectExceptionMessage('Election has already ended');
-        $this->expectExceptionCode(400);
-
-        $election->registerVote($vote);
+        $this->assertTrue($election->hasEnded());
     }
 
     /**
      * @test
      */
-    public function itNotShouldRegisterVoteToNotRegisteredCandidate()
+    public function itShouldReturnFalseBeforeEnd()
     {
-        $this->setDateTime('2022-03-09 20:23:01');
-        $vote = $this->mockVote($this->mockCandidate('abc'));
-        $election = $this->mockElection([$this->mockCandidate('def')]);
+        $this->setDateTime('2022-03-10 20:23:00');
+        $election = $this->mockElection();
 
-        $this->expectExceptionMessage('Not registered candidate');
-        $this->expectExceptionCode(400);
-
-        $election->registerVote($vote);
+        $this->assertFalse($election->hasEnded());
     }
 
-    private function mockCandidate(string $uuid): Candidate
+    /**
+     * @test
+     */
+    public function itShouldReturnTrueWhenCandidateHasregistered()
     {
-        return new Candidate($uuid);
+        $this->setDateTime('2022-03-09 20:20:00');
+        $candidate = $this->mockCandidate("123456789");
+        $election = $this->mockElection([$candidate]);
+
+        $this->assertTrue($election->isRegisterCandidate($candidate));
     }
 
-    private function mockElection(array $candidates = []): Election
+    /**
+     * @test
+     */
+    public function itShouldReturnFalseWhenCandidateHasNotRegistered()
     {
-        return new Election(
-            description: "test",
-            startAt: new Carbon('2022-03-09 20:23:00'),
-            endAt: new Carbon('2022-03-10 20:23:00'),
-            enabled: true,
-            candidates: $candidates
-        );
-    }
+        $this->setDateTime('2022-03-09 20:20:00');
+        $election = $this->mockElection();
 
-    private function mockVote(Candidate $candidate): Vote
-    {
-        $voter = new Voter();
-        return new Vote(candidate: $candidate, voter: $voter);
+        $candidate = $this->mockCandidate("123456789");
+        $this->assertFalse($election->isRegisterCandidate($candidate));
     }
 }

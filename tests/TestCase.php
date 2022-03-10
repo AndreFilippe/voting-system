@@ -4,9 +4,12 @@ namespace Test;
 
 use Carbon\Carbon;
 use PHPUnit\Framework\TestCase as FrameworkTestCase;
+use Test\Utils\Mocks;
 
 abstract class TestCase extends FrameworkTestCase
 {
+    use Mocks;
+
     public function __construct()
     {
         parent::__construct();

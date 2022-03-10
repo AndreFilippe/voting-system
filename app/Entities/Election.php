@@ -7,70 +7,52 @@ use Carbon\Carbon;
 class Election extends Entity
 {
     private array $candidates = [];
+    private array $votes = [];
 
     public function __construct(
         public readonly string $description,
         private Carbon $startAt,
         private Carbon $endAt,
         public bool $enabled,
-        private array $votes = [],
+        array $votes = [],
         array $candidates = [],
     ) {
         $this->setCandidates($candidates);
+        $this->setVotes($votes);
     }
 
-    public function registerCandidate(Candidate $candidate): bool
-    {
-        if ($this->hasStarted()) {
-            throw new \Exception("Election has already started", 400);
-        }
-
-        if ($this->isRegisterCandidate($candidate)) {
-            throw new \Exception("Candidate is already registered", 400);
-        }
-
-        $this->candidates[] = $candidate;
-
-        return true;
-    }
-
-    public function registerVote(Vote $vote): bool
-    {
-        if (!$this->hasStarted()) {
-            throw new \Exception("Election has not already started", 400);
-        }
-
-        if ($this->hasEnded()) {
-            throw new \Exception("Election has already ended", 400);
-        }
-
-        if (!$this->isRegisterCandidate($vote->candidate)) {
-            throw new \Exception("Not registered candidate", 400);
-        }
-
-        $this->votes[] = $vote;
-
-        return true;
-    }
-
-    private function hasStarted(): bool
+    public function hasStarted(): bool
     {
         $now = Carbon::now();
 
         return $now->greaterThanOrEqualTo($this->startAt);
     }
 
-    private function isRegisterCandidate(Candidate $candidate): bool
+    public function hasEnded(): bool
+    {
+        $now = Carbon::now();
+
+        return $now->greaterThan($this->endAt);
+    }
+
+    public function isRegisterCandidate(Candidate $candidate): bool
     {
         $uuids = array_column($this->candidates, 'uuid');
         return in_array($candidate->uuid, $uuids);
     }
 
-    private function hasEnded(): bool
+    public function addCandidate(Candidate $candidate): bool
     {
-        $now = Carbon::now();
+        $this->candidates[] = $candidate;
 
-        return $now->greaterThan($this->endAt);
+        return true;
+    }
+
+    public function addVote(Vote $vote): bool
+    {
+        $this->votes[] = $vote;
+
+        return true;
     }
 
     private function setCandidates(array $candidates): void
@@ -84,5 +66,20 @@ class Election extends Entity
         foreach ($candidates as $candidate) {
             if (!$candidate instanceof Candidate) throw new \Exception("Candidates invalid", 400);
         }
+        return;
+    }
+
+    private function setVotes(array $votes): void
+    {
+        $this->checkVotes($votes);
+        $this->votes[] = $votes;
+    }
+
+    private function checkVotes(array $votes): void
+    {
+        foreach ($votes as $vote) {
+            if (!$vote instanceof Vote) throw new \Exception("Votes invalid", 400);
+        }
+        return;
     }
 }

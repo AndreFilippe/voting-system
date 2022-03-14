@@ -10,7 +10,9 @@
     "infection/infection": "^0.26.6"
   },
   "scripts": {
-    "test": "vendor/bin/phpunit"
+    "test": "vendor/bin/phpunit",
+    "test:coverage": "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html report",
+    "test:mutation": "XDEBUG_MODE=coverage vendor/bin/infection"
   },
   "require": {
     "nesbot/carbon": "^2.57"

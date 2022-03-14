@@ -13,7 +13,8 @@ class ElectionTest extends TestCase
     public function itShouldCreatedInstanceElection()
     {
         $candidate = $this->mockCandidate("123456789");
-        $election = $this->mockElection([$candidate]);
+        $vote = $this->mockVote($candidate);
+        $election = $this->mockElection([$candidate], [$vote]);
 
         $this->assertInstanceOf(Election::class, $election);
         $this->assertEquals('test', $election->description);

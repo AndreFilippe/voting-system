@@ -17,7 +17,7 @@ class ElectionServiceTest extends TestCase
         $election = $this->mockElection();
         $electionService = new ElectionService($election);
 
-        $electionService->registerCandidate($candidate);
+        $this->assertTrue($electionService->registerCandidate($candidate));
         $candidates = $this->getProperty($election, 'candidates');
         $this->assertTrue(in_array($candidate, $candidates));
     }

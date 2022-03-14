@@ -5,9 +5,6 @@ namespace Test\Services;
 use App\Services\ElectionService;
 use Test\TestCase;
 
-/**
- * @covers ElectionService::
- */
 class ElectionServiceTest extends TestCase
 {
     /**

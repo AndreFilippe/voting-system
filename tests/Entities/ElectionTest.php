@@ -5,9 +5,6 @@ namespace Test\Entities;
 use App\Entities\Election;
 use Test\TestCase;
 
-/**
- * @covers Election::
- */
 class ElectionTest extends TestCase
 {
     /**

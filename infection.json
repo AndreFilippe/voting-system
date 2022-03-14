@@ -4,7 +4,7 @@
     "directories": ["app"]
   },
   "logs": {
-    "text": "infection.log"
+    "text": "logs/infection.log"
   },
   "mutators": {
     "@default": true
